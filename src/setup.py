@@ -47,7 +47,7 @@ module = Extension(name = 'eyelike',
 
 
 setup(name="lib-eyelike",
-      version="0.2",
+      version="0.1",
       author="Fabian Timm",
       description="Python bindings for eyeLike lib",
       install_requires=[
