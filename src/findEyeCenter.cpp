@@ -11,6 +11,8 @@
 #include "constants.h"
 #include "helpers.h"
 
+#include "findEyeCenter.hpp"
+
 // Pre-declarations
 cv::Mat floodKillEdges(cv::Mat &mat);
 
@@ -31,12 +33,12 @@ void plotVecField(const cv::Mat &gradientX, const cv::Mat &gradientY, const cv::
   mglData *xData = matToData<double>(gradientX);
   mglData *yData = matToData<double>(gradientY);
   mglData *imgData = matToData<float>(img);
-  
+
   mglGraph gr(0,gradientX.cols * 20, gradientY.rows * 20);
   gr.Vect(*xData, *yData);
   gr.Mesh(*imgData);
   gr.WriteFrame("vecField.png");
-  
+
   delete xData;
   delete yData;
   delete imgData;
@@ -45,9 +47,13 @@ void plotVecField(const cv::Mat &gradientX, const cv::Mat &gradientY, const cv::
 #pragma mark Helpers
 
 cv::Point unscalePoint(cv::Point p, cv::Rect origSize) {
+  // std::cout << "origSize= " << origSize.width << std::endl;
   float ratio = (((float)kFastEyeWidth)/origSize.width);
   int x = round(p.x / ratio);
   int y = round(p.y / ratio);
+  x = x + origSize.x;
+  y = y + origSize.y;
+  // std::cout << "x= " << x << " y= " << y << std::endl;
   return cv::Point(x,y);
 }
 
@@ -57,18 +63,18 @@ void scaleToFastSize(const cv::Mat &src,cv::Mat &dst) {
 
 cv::Mat computeMatXGradient(const cv::Mat &mat) {
   cv::Mat out(mat.rows,mat.cols,CV_64F);
-  
+
   for (int y = 0; y < mat.rows; ++y) {
     const uchar *Mr = mat.ptr<uchar>(y);
     double *Or = out.ptr<double>(y);
-    
+
     Or[0] = Mr[1] - Mr[0];
     for (int x = 1; x < mat.cols - 1; ++x) {
       Or[x] = (Mr[x+1] - Mr[x-1])/2.0;
     }
     Or[mat.cols-1] = Mr[mat.cols-1] - Mr[mat.cols-2];
   }
-  
+
   return out;
 }
 
@@ -102,12 +108,17 @@ void testPossibleCentersFormula(int x, int y, const cv::Mat &weight,double gx, d
   }
 }
 
-cv::Point findEyeCenter(cv::Mat face, cv::Rect eye, std::string debugWindow) {
+//cv::Point findEyeCenter(cv::Mat face, cv::Rect eye) {
+cv::Point findEyeCenter(cv::Mat face, int eye_x, int eye_y, int eye_w, int eye_h) {
+  cv::Rect eye(eye_x, eye_y, eye_w, eye_h);
+  // std::cout << "eye.w= " << eye.width << " eye.h= " << eye.height << std::endl;
   cv::Mat eyeROIUnscaled = face(eye);
   cv::Mat eyeROI;
   scaleToFastSize(eyeROIUnscaled, eyeROI);
+  //eyeROI =eyeROIUnscaled;
+  // std::cout << "eyeRoi.w= " << eyeROI.cols << " eyeRoi.h= " << eyeROI.rows << std::endl;
   // draw eye region
-  rectangle(face,eye,1234);
+  // rectangle(face,eye,1234);
   //-- Find the gradient
   cv::Mat gradientX = computeMatXGradient(eyeROI);
   cv::Mat gradientY = computeMatXGradient(eyeROI.t()).t();
@@ -134,7 +145,7 @@ cv::Point findEyeCenter(cv::Mat face, cv::Rect eye, std::string debugWindow) {
       }
     }
   }
-  imshow(debugWindow,gradientX);
+  // imshow(debugWindow,gradientX);
   //-- Create a blurred and inverted image for weighting
   cv::Mat weight;
   GaussianBlur( eyeROI, weight, cv::Size( kWeightBlurSize, kWeightBlurSize ), 0, 0 );
@@ -151,7 +162,7 @@ cv::Point findEyeCenter(cv::Mat face, cv::Rect eye, std::string debugWindow) {
   // Note: these loops are reversed from the way the paper does them
   // it evaluates every possible center for each gradient location instead of
   // every possible gradient location for every center.
-  printf("Eye Size: %ix%i\n",outSum.cols,outSum.rows);
+  // printf("Eye Size: %ix%i\n",outSum.cols,outSum.rows);
   for (int y = 0; y < weight.rows; ++y) {
     const double *Xr = gradientX.ptr<double>(y), *Yr = gradientY.ptr<double>(y);
     for (int x = 0; x < weight.cols; ++x) {
@@ -187,7 +198,7 @@ cv::Point findEyeCenter(cv::Mat face, cv::Rect eye, std::string debugWindow) {
     // redo max
     cv::minMaxLoc(out, NULL,&maxVal,NULL,&maxP,mask);
   }
-  return unscalePoint(maxP,eye);
+  return unscalePoint(maxP, eye);
 }
 
 #pragma mark Postprocessing
@@ -199,7 +210,7 @@ bool floodShouldPushPoint(const cv::Point &np, const cv::Mat &mat) {
 // returns a mask
 cv::Mat floodKillEdges(cv::Mat &mat) {
   rectangle(mat,cv::Rect(0,0,mat.cols,mat.rows),255);
-  
+
   cv::Mat mask(mat.rows, mat.cols, CV_8U, 255);
   std::queue<cv::Point> toDo;
   toDo.push(cv::Point(0,0));
