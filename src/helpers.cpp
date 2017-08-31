@@ -24,7 +24,7 @@ cv::Mat matrixMagnitude(const cv::Mat &matX, const cv::Mat &matY) {
     double *Mr = mags.ptr<double>(y);
     for (int x = 0; x < matX.cols; ++x) {
       double gX = Xr[x], gY = Yr[x];
-      double magnitude = sqrt((gX * gX) + (gY * gY));
+      double magnitude = sqrt((double) ((gX * gX) + (gY * gY)));
       Mr[x] = magnitude;
     }
   }
@@ -34,6 +34,6 @@ cv::Mat matrixMagnitude(const cv::Mat &matX, const cv::Mat &matY) {
 double computeDynamicThreshold(const cv::Mat &mat, double stdDevFactor) {
   cv::Scalar stdMagnGrad, meanMagnGrad;
   cv::meanStdDev(mat, meanMagnGrad, stdMagnGrad);
-  double stdDev = stdMagnGrad[0] / sqrt(mat.rows*mat.cols);
+  double stdDev = stdMagnGrad[0] / sqrt((double)(mat.rows*mat.cols));
   return stdDevFactor * stdDev + meanMagnGrad[0];
 }

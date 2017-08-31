@@ -49,8 +49,8 @@ void plotVecField(const cv::Mat &gradientX, const cv::Mat &gradientY, const cv::
 cv::Point unscalePoint(cv::Point p, cv::Rect origSize) {
   // std::cout << "origSize= " << origSize.width << std::endl;
   float ratio = (((float)kFastEyeWidth)/origSize.width);
-  int x = round(p.x / ratio);
-  int y = round(p.y / ratio);
+  int x = int(p.x / ratio);
+  int y = int(p.y / ratio);
   x = x + origSize.x;
   y = y + origSize.y;
   // std::cout << "x= " << x << " y= " << y << std::endl;
