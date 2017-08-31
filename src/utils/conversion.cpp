@@ -6,8 +6,13 @@
  * The following conversion functions are taken/adapted from OpenCV's cv2.cpp file
  * inside modules/python/src2 folder.
  */
-
-static void init()
+static
+#if PY_MAJOR_VERSION >= 3
+int
+#else
+void
+#endif
+init()
 {
     import_array();
 }
@@ -189,7 +194,12 @@ NumpyAllocator g_numpyAllocator;
 
 NDArrayConverter::NDArrayConverter() { init(); }
 
-void NDArrayConverter::init()
+#if PY_MAJOR_VERSION >= 3
+int
+#else
+void
+#endif
+NDArrayConverter::init()
 {
     import_array();
 }
