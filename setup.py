@@ -1,6 +1,5 @@
-import os
+import os, sys
 from setuptools import setup, find_packages, Extension
-
 class NumpyExtension(Extension):
     def __init__(self, *args, **kwargs):
         Extension.__init__(self, *args, **kwargs)
@@ -17,24 +16,54 @@ class NumpyExtension(Extension):
     def include_dirs(self, value):
         self._include_dirs = value
 
-module = NumpyExtension(
-    name = 'eyelike',
-    library_dirs=[
-        os.getenv("BOOST_STATIC_LIBRARY_DIR", "."),
-        os.getenv("OPENCV_STATIC_LIBRARY_DIR", "."),
-        # 'C:/Users/Angus/Downloads/boost_1_64_0/stage/lib',
-        # 'C:/Users/Angus/Downloads/opencv_vc9_staticlib/staticlib',
-    ],
-    libraries=[x + "2413" for x in [
+EXTRA_ARGS = []
+LIBS = []
+LIBDIRS = None
+INCLUDES = None
+if sys.platform.startswith('windows'):
+    EXTRA_ARGS = [
+        '-DBOOST_PYTHON_STATIC_LIB',
+        '-DBOOST_ALL_NO_LIB',
+        '/MT',
+        ]
+    LIBS = [x + "2413" for x in [
         'opencv_core',
         'opencv_objdetect',
         'opencv_imgproc',
         'opencv_highgui',
-    ]]+[
-        'zlib',
-        'libboost_python-vc-s-1_64',
-    ],
-    depends = [
+        ]]+[
+            'zlib',
+            'libboost_python-vc-s-1_64',
+            ]
+    INCLUDES = [
+        'opencv_core',
+        'opencv_objdetect',
+        'opencv_imgproc',
+        'opencv_highgui', os.getenv("BOOST_INCLUDE_DIR"),
+        os.getenv("OPENCV_INCLUDE_DIR"),
+        ],
+    LIBDIRS = [
+        os.getenv("BOOST_STATIC_LIBRARY_DIR", "."),
+        os.getenv('lib-eyelike >=0.2, <0.3'),
+        os.getenv("OPENCV_STATIC_LIBRARY_DIR", ".")
+        ]
+else:
+    EXTRA_ARGS = [
+        '-DBOOST_PYTHON_STATIC_LIB',
+        '-DBOOST_ALL_NO_LIB',
+        ]
+    LIBS = [
+        'opencv_core',
+        'opencv_objdetect',
+        'opencv_imgproc',
+        'opencv_highgui',
+    ]
+
+
+EYELIKE_MODULE = NumpyExtension(
+    name='eyelike',
+    libraries=LIBS,
+    depends=[
         "src/findEyeCenter.hpp",
         "src/helpers.h",
         "src/constants.h",
@@ -43,25 +72,15 @@ module = NumpyExtension(
         "src/utils/conversion.h",
         "src/utils/template.h",
     ],
-    include_dirs = [
-        os.getenv("BOOST_INCLUDE_DIR"),
-        os.getenv("OPENCV_INCLUDE_DIR"),
-        # "C:/Users/Angus/Downloads/opencv/build/include",
-        # "C:/Users/Angus/Downloads/boost_1_64_0"
-    ],
-    sources = [
+    sources=[
         "src/findEyeCenter.cpp",
         "src/helpers.cpp",
         "src/np_opencv_converter.cpp",
         "src/utils/conversion.cpp",
     ],
-    extra_compile_args=[
-        '-DBOOST_PYTHON_STATIC_LIB',
-        '-DBOOST_ALL_NO_LIB',
-        '/MT',
-    ],
-)
-
+    include_dirs=INCLUDES,
+    library_dirs=LIBDIRS,
+    )
 
 setup(
     name="lib-eyelike",
@@ -69,7 +88,7 @@ setup(
     author="Fabian Timm",
     description="Python bindings for eyeLike lib",
     install_requires=[
-        'numpy'
+        'numpy>=1.12, <1.13'
     ],
-    ext_modules = [module]
-)
+    ext_modules=[EYELIKE_MODULE]
+    )
