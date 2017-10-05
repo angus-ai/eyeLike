@@ -20,7 +20,7 @@ EXTRA_ARGS = []
 LIBS = []
 LIBDIRS = None
 INCLUDES = None
-if sys.platform.startswith('windows'):
+if sys.platform.startswith('win32'):
     EXTRA_ARGS = [
         '-DBOOST_PYTHON_STATIC_LIB',
         '-DBOOST_ALL_NO_LIB',
@@ -36,15 +36,11 @@ if sys.platform.startswith('windows'):
             'libboost_python-vc-s-1_64',
             ]
     INCLUDES = [
-        'opencv_core',
-        'opencv_objdetect',
-        'opencv_imgproc',
-        'opencv_highgui', os.getenv("BOOST_INCLUDE_DIR"),
+        os.getenv("BOOST_INCLUDE_DIR"),
         os.getenv("OPENCV_INCLUDE_DIR"),
         ],
     LIBDIRS = [
         os.getenv("BOOST_STATIC_LIBRARY_DIR", "."),
-        os.getenv('lib-eyelike >=0.2, <0.3'),
         os.getenv("OPENCV_STATIC_LIBRARY_DIR", ".")
         ]
 else:
