@@ -36,12 +36,16 @@ if sys.platform.startswith('win32'):
             'libboost_python-vc-s-1_64',
             ]
     INCLUDES = [
-        os.getenv("BOOST_INCLUDE_DIR"),
-        os.getenv("OPENCV_INCLUDE_DIR"),
-        ],
+        # os.getenv("BOOST_INCLUDE_DIR"),
+        # os.getenv("OPENCV_INCLUDE_DIR"),
+        "C:/Users/Angus/Downloads/opencv/build/include",
+        "C:/Users/Angus/Downloads/boost_1_64_0"
+        ]
     LIBDIRS = [
-        os.getenv("BOOST_STATIC_LIBRARY_DIR", "."),
-        os.getenv("OPENCV_STATIC_LIBRARY_DIR", ".")
+        # os.getenv("BOOST_STATIC_LIBRARY_DIR", "."),
+        # os.getenv("OPENCV_STATIC_LIBRARY_DIR", ".")
+        'C:/Users/Angus/Downloads/boost_1_64_0/stage/lib',
+        'C:/Users/Angus/Downloads/opencv_vc9_staticlib/staticlib'
         ]
 else:
     EXTRA_ARGS = [
@@ -77,6 +81,7 @@ EYELIKE_MODULE = NumpyExtension(
     ],
     include_dirs=INCLUDES,
     library_dirs=LIBDIRS,
+    extra_compile_args=EXTRA_ARGS
     )
 
 setup(
