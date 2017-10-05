@@ -53,6 +53,7 @@ else:
         '-DBOOST_ALL_NO_LIB',
         ]
     LIBS = [
+        'boost_python',
         'opencv_core',
         'opencv_objdetect',
         'opencv_imgproc',
