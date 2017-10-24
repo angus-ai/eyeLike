@@ -13,6 +13,16 @@ except ImportError:
     from distutils.core import setup, Extension
     from distutils.command.build_ext import build_ext as _build_ext
 
+class build_ext(_build_ext):
+    def finalize_options(self):
+        _build_ext.finalize_options(self)
+        # prevent numpy from thinking it is still in its setup process:
+        try:
+            del builtins.__NUMPY_SETUP__
+        except AttributeError:
+            pass
+        import numpy
+        self.include_dirs.append(numpy.get_include())
 
 EXTRA_ARGS = []
 LIBS = []
@@ -25,26 +35,31 @@ if sys.platform.startswith('win32'):
         '/MT',
         ]
     LIBS = [x + "2413" for x in [
-module = Extension(
         'opencv_core',
         'opencv_objdetect',
         'opencv_imgproc',
         'opencv_highgui',
         ]]+[
             'zlib',
-            'libboost_python-vc-s-1_64',
-            ]
+            'libjpeg',
+            'libpng',
+            'libtiff',
+            'libjasper',
+            'IlmImf',
+            'user32',
+            'libboost_{}-{}-s-1_63'.format(os.getenv("PYTHON_STRING"), os.getenv("VC_VERSION"))
+        ]
     INCLUDES = [
-        # os.getenv("BOOST_INCLUDE_DIR"),
-        # os.getenv("OPENCV_INCLUDE_DIR"),
-        "C:/Users/Angus/Downloads/opencv/build/include",
-        "C:/Users/Angus/Downloads/boost_1_64_0"
+        os.getenv("BOOST_INCLUDE_DIR", "."),
+        os.getenv("OPENCV_INCLUDE_DIR", "."),
+        # "C:/Users/Angus/Downloads/opencv/build/include",
+        # "C:/Users/Angus/Downloads/boost_1_64_0"
         ]
     LIBDIRS = [
-        # os.getenv("BOOST_STATIC_LIBRARY_DIR", "."),
-        # os.getenv("OPENCV_STATIC_LIBRARY_DIR", ".")
-        'C:/Users/Angus/Downloads/boost_1_64_0/stage/lib',
-        'C:/Users/Angus/Downloads/opencv_vc9_staticlib/staticlib'
+        os.getenv("BOOST_STATIC_LIBRARY_DIR", "."),
+        os.getenv("OPENCV_STATIC_LIBRARY_DIR", ".")
+        # 'C:/Users/Angus/Downloads/boost_1_64_0/stage/lib',
+        # 'C:/Users/Angus/Downloads/opencv_vc9_staticlib/staticlib'
         ]
 else:
     EXTRA_ARGS = [
@@ -60,7 +75,7 @@ else:
     ]
 
 
-EYELIKE_MODULE = NumpyExtension(
+EYELIKE_MODULE = Extension(
     name='eyelike',
     libraries=LIBS,
     depends=[
@@ -90,7 +105,7 @@ EYELIKE_MODULE = NumpyExtension(
 try:
     import numpy
 except ImportError:
-    build_requires = ['numpy']
+    build_requires = ['numpy>=1.12, <1.13']
 else:
     build_requires = []
 
@@ -100,7 +115,7 @@ setup(
     author="Fabian Timm",
     description="Python bindings for eyeLike lib",
     install_requires=build_requires,
-        'numpy>=1.12, <1.13'
-    ext_modules=[module],
+    setup_requires=build_requires,
+    ext_modules=[EYELIKE_MODULE],
     cmdclass={'build_ext': build_ext},
     )
