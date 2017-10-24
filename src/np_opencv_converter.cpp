@@ -7,7 +7,13 @@
 namespace fs { namespace python {
 
 // Static PyInit
-static void py_init() {
+static
+#if PY_MAJOR_VERSION >= 3
+int
+#else
+void
+#endif
+py_init() {
   Py_Initialize();
   import_array();
 }

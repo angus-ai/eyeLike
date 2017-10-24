@@ -1,20 +1,18 @@
 import os, sys
-from setuptools import setup, find_packages, Extension
-class NumpyExtension(Extension):
-    def __init__(self, *args, **kwargs):
-        Extension.__init__(self, *args, **kwargs)
-        self._include_dirs = self.include_dirs
-        delattr(self, "include_dirs")
+import sys
+if sys.version_info[0] < 3:
+    import __builtin__ as builtins
+else:
+    import builtins
 
-    @property
-    def include_dirs(self):
-        import numpy
-        self._include_dirs.append(numpy.get_include())
-        return self._include_dirs
+try :
+    from setuptools import setup, Extension
+    from setuptools.command.build_ext import build_ext as _build_ext
+except ImportError:
+    # fall back on distutils
+    from distutils.core import setup, Extension
+    from distutils.command.build_ext import build_ext as _build_ext
 
-    @include_dirs.setter
-    def include_dirs(self, value):
-        self._include_dirs = value
 
 EXTRA_ARGS = []
 LIBS = []
@@ -27,6 +25,7 @@ if sys.platform.startswith('win32'):
         '/MT',
         ]
     LIBS = [x + "2413" for x in [
+module = Extension(
         'opencv_core',
         'opencv_objdetect',
         'opencv_imgproc',
@@ -84,13 +83,24 @@ EYELIKE_MODULE = NumpyExtension(
     extra_compile_args=EXTRA_ARGS
     )
 
+# Figure out whether to add ``*_requires = ['numpy']``.
+# We don't want to do that unconditionally, because we risk updating
+# an installed numpy which fails too often.  Just if it's not installed, we
+# may give it a try.
+try:
+    import numpy
+except ImportError:
+    build_requires = ['numpy']
+else:
+    build_requires = []
+
 setup(
     name="lib-eyelike",
     version="0.2.1",
     author="Fabian Timm",
     description="Python bindings for eyeLike lib",
-    install_requires=[
+    install_requires=build_requires,
         'numpy>=1.12, <1.13'
-    ],
-    ext_modules=[EYELIKE_MODULE]
+    ext_modules=[module],
+    cmdclass={'build_ext': build_ext},
     )

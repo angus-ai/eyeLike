@@ -1,0 +1,109 @@
+platform:
+  - x64
+
+version: "{build}"
+
+configuration: Release
+
+environment:
+  matrix:
+    - PYTHON: "C:\\\\Python27"
+      PYTHON_STRING: "python"
+      PYTHON_VERSION: "2.7"
+      MSVC_VERSION: "9.0"
+      VC_VERSION: "vc90"
+      ACTIVATION_CMD: 'C:\Program Files (x86)\Microsoft Visual Studio %MSVC_VERSION%\VC\bin\vcvars32.bat'
+      PARAMS: ''
+      ADDRESS_MODEL: ''
+    - PYTHON: "C:\\\\Python27-x64"
+      PYTHON_STRING: "python"
+      PYTHON_VERSION: "2.7"
+      MSVC_VERSION: "9.0"
+      VC_VERSION: "vc90"
+      ACTIVATION_CMD: 'C:\Program Files (x86)\Microsoft Visual Studio %MSVC_VERSION%\VC\bin\vcvars64.bat'
+      PARAMS: ''
+      ADDRESS_MODEL: 'address-model=64'
+    - PYTHON: "C:\\\\Python34"
+      PYTHON_STRING: "python3"
+      PYTHON_VERSION: "3.4"
+      MSVC_VERSION: "10.0"
+      VC_VERSION: "vc100"
+      ACTIVATION_CMD: 'C:\Program Files (x86)\Microsoft Visual Studio %MSVC_VERSION%\VC\bin\vcvars32.bat'
+      PARAMS: ''
+      ADDRESS_MODEL: ''
+    - PYTHON: "C:\\\\Python34-x64"
+      PYTHON_STRING: "python3"
+      PYTHON_VERSION: "3.4"
+      MSVC_VERSION: "10.0"
+      VC_VERSION: "vc100"
+      ACTIVATION_CMD: 'C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd'
+      PARAMS: "/x64"
+      ADDRESS_MODEL: 'address-model=64'
+    - PYTHON: "C:\\\\Python35"
+      PYTHON_STRING: "python3"
+      PYTHON_VERSION: "3.5"
+      MSVC_VERSION: "14.0"
+      VC_VERSION: "vc140"
+      ACTIVATION_CMD: 'C:\Program Files (x86)\Microsoft Visual Studio %MSVC_VERSION%\VC\bin\vcvars32.bat'
+      PARAMS: ''
+      ADDRESS_MODEL: ''
+    - PYTHON: "C:\\\\Python35-x64"
+      PYTHON_STRING: "python3"
+      PYTHON_VERSION: "3.5"
+      MSVC_VERSION: "14.0"
+      VC_VERSION: "vc140"
+      ACTIVATION_CMD: 'C:\Program Files (x86)\Microsoft Visual Studio %MSVC_VERSION%\VC\bin\amd64\vcvars64.bat'
+      PARAMS: ''
+      ADDRESS_MODEL: 'address-model=64'
+    - PYTHON: "C:\\\\Python36"
+      PYTHON_STRING: "python3"
+      PYTHON_VERSION: "3.6"
+      MSVC_VERSION: "14.0"
+      VC_VERSION: "vc140"
+      ACTIVATION_CMD: 'C:\Program Files (x86)\Microsoft Visual Studio %MSVC_VERSION%\VC\bin\vcvars32.bat'
+      PARAMS: ''
+      ADDRESS_MODEL: ''
+    - PYTHON: "C:\\\\Python36-x64"
+      PYTHON_STRING: "python3"
+      PYTHON_VERSION: "3.6"
+      MSVC_VERSION: "14.0"
+      VC_VERSION: "vc140"
+      ACTIVATION_CMD: 'C:\Program Files (x86)\Microsoft Visual Studio %MSVC_VERSION%\VC\bin\amd64\vcvars64.bat'
+      PARAMS: ''
+      ADDRESS_MODEL: 'address-model=64'
+before_build:
+  - cd "C:\Libraries\boost_1_63_0"
+  - bootstrap
+  - "echo using python >> project-config.jam"
+  - "echo     : %PYTHON_VERSION% >> project-config.jam"
+  - "echo     : %PYTHON%\\\\python.exe >> project-config.jam"
+  - "echo     : %PYTHON%\\\\include >> project-config.jam"
+  - "echo     : %PYTHON%\\\\libs >> project-config.jam"
+  - "echo     :  >> project-config.jam"
+  - "echo     ; >> project-config.jam"
+  - type project-config.jam
+  - call "%ACTIVATION_CMD%" %PARAMS%
+
+  - b2 -a -j 4 link=static runtime-link=static --toolset=msvc-%MSVC_VERSION% %ADDRESS_MODEL% --build-type=complete stage --with-python
+  - choco install opencv --version 2.4.13
+  - cd "C:\tools\opencv\sources"
+  - md build-static
+  - cd build-static
+  - cmake -DCMAKE_BUILD_TYPE=release -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_opencv_flann=OFF -DBUILD_opencv_features2d=OFF -DBUILD_opencv_calib3d=OFF -DBUILD_opencv_ml=OFF -DBUILD_opencv_video=OFF -DBUILD_opencv_legacy=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_gpu=OFF -DBUILD_opencv_ocl=OFF -DBUILD_opencv_nonfree=OFF -DBUILD_opencv_contrib=OFF -DBUILD_opencv_stiching=OFF -DBUILD_opencv_superres=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_videostab=OFF -DBUILD_JASPER=OFF -DBUILD_TIFF=OFF -DBUILD_JPEG=OFF -DBUILD_PNG=OFF -DBUILD_OPENEXR=OFF -G "NMake Makefiles" ..
+  - nmake
+  - copy "3rdparty\lib\*.lib" "lib"
+  - dir lib
+
+build_script:
+  - set BOOST_STATIC_LIBRARY_DIR="C:\Libraries\boost_1_63_0\stage\lib"
+  - set OPENCV_STATIC_LIBRARY_DIR="C:\tools\opencv\sources\build-static\lib"
+  - set OPENCV_INCLUDE_DIR="C:\tools\opencv\build\include"
+  - set BOOST_INCLUDE_DIR="C:\Libraries\boost_1_63_0"
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - "%PYTHON%\\Scripts\\pip install numpy"
+  - "%PYTHON%\\Scripts\\pip install wheel"
+  - "%PYTHON%\\python.exe setup.py bdist_wheel"
+
+artifacts:
+  # bdist_wheel puts your built wheel in the dist directory
+  - path: dist\*.whl
