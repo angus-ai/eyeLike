@@ -111,7 +111,7 @@ else:
 
 setup(
     name="lib-eyelike",
-    version="0.2.1",
+    version="0.2.2",
     author="Fabian Timm",
     description="Python bindings for eyeLike lib",
     install_requires=build_requires,
