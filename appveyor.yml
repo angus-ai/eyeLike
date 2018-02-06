@@ -100,9 +100,9 @@ build_script:
   - set OPENCV_INCLUDE_DIR="C:\tools\opencv\build\include"
   - set BOOST_INCLUDE_DIR="C:\Libraries\boost_1_63_0"
   - cd %APPVEYOR_BUILD_FOLDER%
-  - "%PYTHON%\\Scripts\\pip install numpy"
   - "%PYTHON%\\Scripts\\pip install wheel"
-  - "%PYTHON%\\python.exe setup.py bdist_wheel"
+  - "%PYTHON%\\Scripts\\pip wheel -w dist ."
+
 
 artifacts:
   # bdist_wheel puts your built wheel in the dist directory
